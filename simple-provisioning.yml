@@ -29,8 +29,8 @@
       region: "{{ aws_region }}"
       vpc_id: "{{ result_vpc.vpc.id }}"
       cidr: "{{  subnet_cidr_block }}"
-    tags:
-      Name: Webserver Subnet
+      tags:
+        Name: Webserver Subnet
     register: result_subnet
     
   - name: Create igw
@@ -44,13 +44,13 @@
     ec2_vpc_route_table:
       vpc_id: "{{ result_vpc.vpc.id }}"
       region: "{{ aws_region }}"
-    tags:
-      Name: Public
-    subnets:
-      - "{{ result_subnet.subnet.id }}"
-    routes:
-      - dest: 0.0.0.0/0
-        gateway_id: "{{ result_igw.gateway_id }}"
+      tags:
+        Name: Public
+      subnets:
+        - "{{ result_subnet.subnet.id }}"
+      routes:
+        - dest: 0.0.0.0/0
+          gateway_id: "{{ result_igw.gateway_id }}"
     register: result_rout_table
     
   - name: create security group
@@ -66,3 +66,17 @@
           - 22
           cidr_ip: 0.0.0.0/0
           rule_desc: allow all on port 80
+  
+  - name: Create EC2
+    ec2:
+      key_name: "{{ ec2_key_name }}"
+      instance_type: "{{ instance_type }}"
+      image: "{{ instance_image }}"
+      wait: no
+      group: Public-jisoo
+      count: 1
+      region: "{{ aws_region }}"
+      vpc_subnet_id: "{{ result_subnet.subnet.id }}"
+      assign_public_ip: yes
+      instance_tags:
+        Name: Webserver
